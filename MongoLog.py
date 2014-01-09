@@ -18,8 +18,6 @@ import znc
 import znc_core
 from datetime import datetime
 from pymongo import MongoClient
-from queue import Queue
-from threading import Thread
 
 # To add a user
 # db.addUser({user: "znc", pwd:"znc", "roles": ["readWrite"]})
