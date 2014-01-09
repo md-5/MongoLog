@@ -30,24 +30,6 @@ class MongoLog(znc.Module):
     description = 'Logs stuff to MongoDB'
     module_types = [znc.CModInfo.GlobalModule, znc.CModInfo.UserModule, znc.CModInfo.NetworkModule]
 
-    worker_threads = 1
-
-    # Work Queue
-    queue = Queue()
-    # Worker Method
-    def process(self):
-        while True:
-            print('hi')
-        while True:
-            print('wait')
-            entry = self.queue.get()
-            try:
-                print('process')
-                self.mongo.insert(entry)
-            except:
-                raise
-        self.queue.task_done()
-
     def PutLog(self, stuff):
         stuff['log-user'] = self.GetUser().GetUserName()
         stuff['log-network'] = self.GetNetwork().GetName()
@@ -61,23 +43,19 @@ class MongoLog(znc.Module):
                 print(value)
             entry[key] = value
 
-        print(entry)
-        self.queue.put(entry)
+        try:
+            self.mongo.insert(entry)
+            self.PutModule('We just logged %s' % entry)
+        except Exception as e:
+            self.PutModule('Fatal exception %s' % e)
 
     def OnLoad(self, sArgs, sMessage):
         args = sArgs.split()
         if len(args) != 3:
-            sMessage = "Not enough arguments, syntax: <connection string> <database> <collection>"
-            return False
+            raise Exception('Not enough arguments, syntax: <connection string> <database> <collection>')
 
         self.mongo = MongoClient(args[0])[args[1]][args[2]]
 
-        for i in range(self.worker_threads):
-            thread = Thread(target = self.process)
-            thread.daemon = True
-            thread.start()
-
-        # We made it
         return True
 
     def OnShutdown(self):
