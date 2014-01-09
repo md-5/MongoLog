@@ -47,6 +47,7 @@ class MongoLog(znc.Module):
             self.mongo.insert(entry)
             self.PutModule('We just logged %s' % entry)
         except Exception as e:
+            self.PutModule('Error logging %s' % entry)
             self.PutModule('Fatal exception %s' % e)
 
     def OnLoad(self, sArgs, sMessage):
@@ -57,22 +58,6 @@ class MongoLog(znc.Module):
         self.mongo = MongoClient(args[0])[args[1]][args[2]]
 
         return True
-
-    def OnShutdown(self):
-        # self.queue.join()
-        pass
-
-    def OnIRCConnected(self):
-        self.PutLog({
-            'connect': GetServer()
-            })
-        return znc.CONTINUE
-
-    def OnIRCDisconnected(self):
-        self.PutLog({
-            'disconnect': GetServer()
-            })
-        return znc.CONTINUE
 
     def OnRawMode(self, OpNick, Channel, sModes, sArgs):
         self.PutLog({
@@ -98,7 +83,7 @@ class MongoLog(znc.Module):
                 'user': Nick.GetNick(),
                 'ident': Nick.GetIdent(),
                 'host': Nick.GetHost(),
-                'window': Channel.getName(),
+                'window': Channel.GetName(),
                 'quit-message': sMessage
                 });
         return znc.CONTINUE
@@ -121,11 +106,12 @@ class MongoLog(znc.Module):
             'part-message': sMessage
             })
         return znc.CONTINUE
+
     def OnNick(self, Nick, sNewNick, vChans):
         for Channel in vChans:
             self.PutLog({
                 'user': Nick.GetNick(),
-                'window': Channel.getName(),
+                'window': Channel.GetName(),
                 'nick': sNewNick
                 });
         return znc.CONTINUE
@@ -149,7 +135,7 @@ class MongoLog(znc.Module):
     def OnPrivNotice(self, Nick, sMessage):
         self.PutLog({
             'user': Nick.GetNick(),
-            'window': Nick,
+            'window': Nick.GetNick(),
             'notice': sMessage
             })
         return znc.CONTINUE
